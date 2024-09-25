@@ -21,9 +21,17 @@ fn main() {
         .build()
         .unwrap();
 
-    let config = config_data.try_deserialize::<HashMap<String, String>>().unwrap();
+        let config = config_data.try_deserialize::<HashMap<String, HashMap<String, String>>>().unwrap();
 
-    // starting the application
-    log::info!("worker [{}] starting...", config["service_id"]);
+        // starting the application
+        log::info!("worker [{}] starting...", config["meta"]["id"]);
     
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn try_test() {
+        assert_eq!(true, true);
+    }
 }

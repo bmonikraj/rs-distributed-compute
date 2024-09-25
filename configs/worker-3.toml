@@ -1,7 +1,6 @@
-service_id = "worker-3"
+[meta]
+id = "worker-3"
 
-server_host = "0.0.0.0"
-server_port = 10003
-
-manager_host = "localhost:9000"
-manager_ssl = false
+[nats]
+host = "demo.nats.io"
+topic = "bmonikraj-rs-distributed-compute-task"

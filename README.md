@@ -5,6 +5,12 @@ Distributed Computation for ML training with task management in Rust
 
 [Reference](https://min.io/docs/minio/macos/administration/minio-console.html#minio-console)
 
+### NATS Demo cluster and Code example 
+
+Demo - `demo.nats.io`
+
+[Nats by Example](https://natsbyexample.com/)
+
 ### SQLite 
 
 [Reference](https://www.sqlite.org/)
