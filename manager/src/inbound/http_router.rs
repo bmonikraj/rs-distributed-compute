@@ -4,7 +4,7 @@ use actix_web::{web, App, HttpServer, Responder, Result};
 use crate::model::health_info::{self, TraitInfoResponse};
 
 async fn health_info() -> Result<impl Responder> {
-    let mut response = health_info::InfoResponse::new();
+    let mut response: health_info::InfoResponse = health_info::InfoResponse::new();
     response.set("up!".to_string());
     Ok(web::Json(response))
 }
