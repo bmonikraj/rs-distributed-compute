@@ -11,17 +11,22 @@ pub async fn start(config: &HashMap<String, HashMap<String, String>>) {
         .route("/health", get(handler_health_get))
         .route("/task", post(handler_task_post).get(handler_task_get_all))
         .route("/task/:id", get(handler_task_get).delete(handler_task_delete).patch(handler_task_update));
-    
+
     let app = app.fallback(handler_404);
 
     let host = config["server"]["host"].to_string();
     let port = config["server"]["port"].to_string();
-    let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
-        .await
-        .unwrap();
+    let listener = match tokio::net::TcpListener::bind(format!("{host}:{port}"))
+        .await {
+            Ok(l) => l,
+            Err(_) => tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap(),
+        };
 
-    log::info!("starting server on {host}:{port}");
-    axum::serve(listener, app).await.unwrap();
+    log::info!("starting server on {:#?}", listener.local_addr().unwrap());
+    match axum::serve(listener, app).await {
+        Err(e)=> log::error!("error starting the server: {}", e),
+        _ => (),
+    }
 }
 
 async fn handler_404() -> impl IntoResponse {
