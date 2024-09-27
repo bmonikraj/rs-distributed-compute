@@ -4,7 +4,6 @@ id = "manager"
 [server]
 host = "0.0.0.0"
 port = 10000
-worker = 4
 
 [nats]
 host = "demo.nats.io"

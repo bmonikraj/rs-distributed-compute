@@ -32,7 +32,7 @@ fn main() {
     // starting the application
     log::info!("manager [{}] starting...", config["meta"]["id"]);
 
-    let _ = inbound::http_router::main(&config);
+    let _ = inbound::http_router::start(&config);
     
 }
 
