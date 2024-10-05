@@ -11,9 +11,9 @@ Demo - `demo.nats.io`
 
 [Nats by Example](https://natsbyexample.com/)
 
-### SQLite 
+### MongoDB 
 
-[Reference](https://www.sqlite.org/)
+[Reference](https://www.mongodb.com/docs/languages/rust/)
 
 ### Configuration format 
 
@@ -27,7 +27,7 @@ Demo - `demo.nats.io`
 | CREATED    | User    | Manager | POST /TASK                            |
 | PENDING    | Manager | Manager | MANAGER CODE BEFORE PUBLISH TASK      |
 | COMPLETED  | Worker  | Manager | MANAGER CONSUMES COMPLETION EVENT     |
-| DISCARDING | User    | Manager | PATCH /TASK                          |
+| DISCARDING | User    | Manager | PATCH /TASK                           |
 | DISCARDED  | Worker  | Manager | MANAGER CONSUMES MODEL DELETION EVENT |
 
 ### DB Details

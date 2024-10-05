@@ -34,31 +34,37 @@ async fn handler_404() -> impl IntoResponse {
 }
 
 async fn handler_health_get() -> impl IntoResponse {
+    log::info!("<health_get> handler in controller invoked");
     let health_service = Health::new();
     return (StatusCode::OK, Json(health_service.info()));
 }
 
 async fn handler_task_get_all() -> () {
+    log::info!("<task_get_all> handler in controller invoked");
     todo!()
     // get all data from db through manager
 }
 
 async fn handler_task_get() -> () {
+    log::info!("<task_get> handler in controller invoked");
     todo!()
     // get specific data from db through manager
 }
 
 async fn handler_task_post() -> () {
+    log::info!("<task_post> handler in controller invoked");
     todo!()
     // create task in db through manager and ask worker to start the work - ml train and publish model in minio 
 }
 
 async fn handler_task_update() -> () {
+    log::info!("<task_update> handler in controller invoked");
     todo!()
     // update meta data in db through manager
 }
 
 async fn handler_task_delete() -> () {
+    log::info!("<task_delete> handler in controller invoked");
     todo!()
     // delete the minio model through worker and data in db through manager
 }

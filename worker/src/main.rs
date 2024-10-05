@@ -16,13 +16,18 @@ fn main() {
     }
     let config_path = &args[1];
     
-    let config_data = Config::builder()
+    let config_data = match Config::builder()
         .add_source(config::File::with_name(config_path))
-        .build()
-        .unwrap();
+        .build() {
+            Ok(v) => v,
+            Err(e) => panic!("config error: {}", e),
+        };
 
-        let config = config_data.try_deserialize::<HashMap<String, HashMap<String, String>>>().unwrap();
-
+        let config = match config_data.try_deserialize::<HashMap<String, HashMap<String, String>>>() {
+            Ok(v) => v,
+            Err(e) => panic!("config error: {}", e)
+        };
+        
         // starting the application
         log::info!("worker [{}] starting...", config["meta"]["id"]);
     
