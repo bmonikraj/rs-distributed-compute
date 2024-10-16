@@ -45,9 +45,12 @@ Task Log Collection:
 
 1. id -> uuid, string
 2. inp_num -> input number, number
-3. sum -> sum of prime numbers less than equal to inp_num
+3. sum -> sum of prime numbers less than equal to inp_num 
 
+### Sieve of Sundaram
 
+[Wikipedia](https://en.wikipedia.org/wiki/Sieve_of_Sundaram)
+[GFG](https://www.geeksforgeeks.org/sieve-sundaram-print-primes-smaller-n/)
 
 ### Web framework reference
 
