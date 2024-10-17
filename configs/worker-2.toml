@@ -4,3 +4,6 @@ id = "worker-2"
 [nats]
 host = "demo.nats.io"
 topic = "bmonikraj-rs-distributed-compute-task"
+
+[mongodb]
+cnx = "mongodb+srv://bmonikraj:IfxTUalmQ6uONiU7@cluster0.yqupv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
