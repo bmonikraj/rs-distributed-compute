@@ -1,5 +1,12 @@
 # rs-distributed-compute
-Distributed Computation for ML training with task management in Rust
+Distributed Computation for Finding sum of Prime numbers less than `N` with task management in Rust
+
+## TODO
+
+- APIs for task management (Management)
+- MongoDB integration (Worker and Manager)
+- NATS integration (Worker and Manager)
+- Prime number sum algorithm (Worker)
 
 ### NATS Demo cluster and Code example 
 
