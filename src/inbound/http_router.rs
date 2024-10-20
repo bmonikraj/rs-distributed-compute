@@ -3,15 +3,14 @@ use std::collections::HashMap;
 use axum::{http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
 use serde_json::json;
 
-use crate::service::{health::Health, t_health::THealth};
+use crate::service::{self, health::Health, t_algorithm::Algorithm};
 
 #[tokio::main]
 pub async fn start(config: &HashMap<String, HashMap<String, String>>) {
     let app = Router::new()
         .route("/health", get(handler_health_get))
-        .route("/task", post(handler_task_post).get(handler_task_get_all))
-        .route("/task/:id", get(handler_task_get).delete(handler_task_delete).patch(handler_task_update));
-
+        .route("/compute", post(handler_compute_post));
+        
     let app = app.fallback(handler_404);
 
     let host = config["server"]["host"].to_string();
@@ -39,32 +38,10 @@ async fn handler_health_get() -> impl IntoResponse {
     return (StatusCode::OK, Json(health_service.info()));
 }
 
-async fn handler_task_get_all() -> () {
-    log::info!("<task_get_all> handler in controller invoked");
-    todo!()
-    // get all data from db through manager
-}
-
-async fn handler_task_get() -> () {
-    log::info!("<task_get> handler in controller invoked");
-    todo!()
-    // get specific data from db through manager
-}
-
-async fn handler_task_post() -> () {
-    log::info!("<task_post> handler in controller invoked");
-    todo!()
-    // create task in db through manager and ask worker to start the work - ml train and publish model in minio 
-}
-
-async fn handler_task_update() -> () {
-    log::info!("<task_update> handler in controller invoked");
-    todo!()
-    // update meta data in db through manager
-}
-
-async fn handler_task_delete() -> () {
-    log::info!("<task_delete> handler in controller invoked");
-    todo!()
-    // delete the minio model through worker and data in db through manager
+async fn handler_compute_post() -> () {
+    log::info!("<compute_post> handler in controller invoked");
+    let mut algorithm_service = service::factory_algorithm::get_algorithm("name".to_owned()).unwrap();
+    // match algorithm_service.compute("param".to_string()) {
+        
+    // }
 }

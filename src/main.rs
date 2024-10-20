@@ -1,6 +1,11 @@
 use std::{collections::HashMap, env, process::exit};
 use config::Config;
 
+mod inbound;
+mod model;
+mod outbound;
+mod service;
+
 fn main() {
     // setting the logger
     env_logger::builder()
@@ -23,14 +28,16 @@ fn main() {
             Err(e) => panic!("config error: {}", e),
         };
 
-        let config = match config_data.try_deserialize::<HashMap<String, HashMap<String, String>>>() {
-            Ok(v) => v,
-            Err(e) => panic!("config error: {}", e)
-        };
-        
-        // starting the application
-        log::info!("worker [{}] starting...", config["meta"]["id"]);
-    
+    let config = match config_data.try_deserialize::<HashMap<String, HashMap<String, String>>>() {
+        Ok(v) => v,
+        Err(e) => panic!("config error: {}", e)
+    };
+
+    // starting the application
+    log::info!("application [{}] starting...", config["meta"]["id"]);
+
+    inbound::http_router::start(&config);
+
 }
 
 #[cfg(test)]
