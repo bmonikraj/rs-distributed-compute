@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use axum::{http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
 use serde_json::json;
+use tokio::signal;
 
-use crate::service::{self, health::Health, t_algorithm::Algorithm};
+use crate::{model::request_compute::RequestCompute, service::{self, health::Health, t_algorithm::Algorithm}};
 
 #[tokio::main]
 pub async fn start(config: &HashMap<String, HashMap<String, String>>) {
@@ -22,9 +23,33 @@ pub async fn start(config: &HashMap<String, HashMap<String, String>>) {
         };
 
     log::info!("starting server on {:#?}", listener.local_addr().unwrap());
-    match axum::serve(listener, app).await {
+    match axum::serve(listener, app).with_graceful_shutdown(shutdown_signal()).await {
         Err(e)=> log::error!("error starting the server: {}", e),
         _ => (),
+    }
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
     }
 }
 
@@ -38,10 +63,12 @@ async fn handler_health_get() -> impl IntoResponse {
     return (StatusCode::OK, Json(health_service.info()));
 }
 
-async fn handler_compute_post() -> () {
+async fn handler_compute_post(Json(request): Json<RequestCompute>) -> impl IntoResponse {
     log::info!("<compute_post> handler in controller invoked");
-    let mut algorithm_service = service::factory_algorithm::get_algorithm("name".to_owned()).unwrap();
-    // match algorithm_service.compute("param".to_string()) {
-        
-    // }
+    let mut algorithm_service = match service::factory_algorithm::get_algorithm(request.name) {
+        Ok(a) => a,
+        Err(e) => return (StatusCode::NOT_IMPLEMENTED, Json(json!({"error": e.to_string()}))),
+    };
+    _ = algorithm_service.compute(request.param);
+    return (StatusCode::OK, Json(json!({})));
 }

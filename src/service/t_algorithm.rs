@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::model::{request_compute::RequestCompute, response_compute::ResponseCompute};
+use crate::model::{response_compute::ResponseCompute};
 
 pub trait Algorithm {
     fn new() -> Self;
