@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
 use axum::{http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
 use serde_json::json;
@@ -60,7 +60,7 @@ async fn handler_404() -> impl IntoResponse {
 async fn handler_health_get() -> impl IntoResponse {
     log::info!("<health_get> handler in controller invoked");
     let health_service = Health::new();
-    return (StatusCode::OK, Json(health_service.info()));
+    return (StatusCode::OK, Json(json!(health_service.info())));
 }
 
 async fn handler_compute_post(Json(request): Json<RequestCompute>) -> impl IntoResponse {
@@ -69,6 +69,13 @@ async fn handler_compute_post(Json(request): Json<RequestCompute>) -> impl IntoR
         Ok(a) => a,
         Err(e) => return (StatusCode::NOT_IMPLEMENTED, Json(json!({"error": e.to_string()}))),
     };
-    _ = algorithm_service.compute(request.param);
-    return (StatusCode::OK, Json(json!({})));
+
+    let timer = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros();
+    let mut response = match algorithm_service.compute(request.param) {
+        Ok(r) => r,
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    };
+    response.duration_micro_secs = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros() - timer;
+
+    return (StatusCode::OK, Json(json!(response)));
 }
