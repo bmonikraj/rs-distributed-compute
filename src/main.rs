@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, process::exit};
+use std::{collections::HashMap, env, process::exit, str::FromStr};
 use config::Config;
 
 mod inbound;
@@ -7,12 +7,6 @@ mod outbound;
 mod service;
 
 fn main() {
-    // setting the logger
-    env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
-        .format_target(false)
-        .init();
-
     // read configuration
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -32,6 +26,13 @@ fn main() {
         Ok(v) => v,
         Err(e) => panic!("config error: {}", e)
     };
+
+    // setting the logger
+    let log_level = log::LevelFilter::from_str(config["log"]["level"].as_str()).unwrap();
+    env_logger::builder()
+        .filter_level(log_level)
+        .format_target(false)
+        .init();
 
     // starting the application
     log::info!("application [{}] starting...", config["meta"]["id"]);

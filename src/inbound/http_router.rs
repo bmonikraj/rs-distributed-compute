@@ -4,7 +4,7 @@ use axum::{http::StatusCode, response::{IntoResponse, Json}, routing::{get, post
 use serde_json::json;
 use tokio::signal;
 
-use crate::{model::request_compute::RequestCompute, service::{self, health::Health, t_algorithm::Algorithm}};
+use crate::{model::request_compute::RequestCompute, service::{self, health::Health}};
 
 #[tokio::main]
 pub async fn start(config: &HashMap<String, HashMap<String, String>>) {

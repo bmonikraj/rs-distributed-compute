@@ -2,19 +2,15 @@ use super::t_algorithm::Algorithm;
 use crate::model::response_compute::ResponseCompute;
 use std::error::Error;
 
-pub struct EvenFibN {
+pub struct EvenFibSum {
     n: i128,
 }
 
-impl Algorithm for EvenFibN {
-    fn new() -> Self {
-        return Self { n: 0 };
-    }
-
+impl Algorithm for EvenFibSum {
     fn compute(&mut self, param: String) -> Result<ResponseCompute, Box<dyn Error>> {
         self.n = param.parse::<i128>().unwrap();
         let mut r = ResponseCompute {
-            name: "EvenFibN".to_string(),
+            name: "EvenFibSum".to_string(),
             result: "".to_string(),
             duration_micro_secs: 0,
         };
@@ -22,7 +18,7 @@ impl Algorithm for EvenFibN {
         let sum_after_compute = self.sum_even_terms_of_fibonacci_upto_n(self.n);
 
         if sum_after_compute < 0 {
-            Err(format!("error while computing sum of even valued terms of fibonacci series upto {}", self.n).into())
+            Err(format!("error while computing sum of even valued terms of fibonacci series upto n = {}", self.n).into())
         } else {
             r.result = sum_after_compute.to_string();
             Ok(r)
@@ -30,7 +26,11 @@ impl Algorithm for EvenFibN {
     }
 }
 
-impl EvenFibN {
+impl EvenFibSum {
+    pub fn new() -> Self {
+        return Self { n: 0 };
+    }
+
     fn sum_even_terms_of_fibonacci_upto_n(&self, n: i128) -> i128 {
         let mut result = std::i128::MIN;
 
