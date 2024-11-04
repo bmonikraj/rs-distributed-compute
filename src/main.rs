@@ -1,5 +1,6 @@
 use std::{collections::HashMap, env, process::exit, str::FromStr};
 use config::Config;
+use outbound::db_driver::DbDriver;
 
 mod inbound;
 mod model;
@@ -37,7 +38,9 @@ fn main() {
     // starting the application
     log::info!("application [{}] starting...", config["meta"]["id"]);
 
-    inbound::http_router::start(&config);
+    let db_client = DbDriver::new(&config);
+
+    inbound::http_router::start(&config, db_client);
 
 }
 

@@ -12,14 +12,11 @@ Distributed Computation for Finding sum of Prime numbers less than `N` with task
 
 ### DB Details
 
-Table = 1
+DB Provider: `Aiven`
 
-1. id -> uuid, string
-2. algorithm -> name of algorithm, string
-3. input -> input param, string
-4. output -> result, string
-5. created_at -> creation date, date
-6. updated_at -> update date, date
+Postgres URI => No SSL 
+
+Example -> `"postgres://user:password@host:port/database"`
 
 ### Web framework reference
 

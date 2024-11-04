@@ -7,7 +7,7 @@ even_fib_sum => https://projecteuler.net/problem=2
 primality_seq => https://projecteuler.net/problem=216 
 */
 
-pub fn get_algorithm(name: String) -> Result<Box<dyn Algorithm>, Box<dyn Error>> {
+pub fn get_algorithm(name: &String) -> Result<Box<dyn Algorithm>, Box<dyn Error>> {
     match name.as_str() {
         "even_fib_sum" => Ok(Box::new(EvenFibSum::new())),
         "primality_seq" => Ok(Box::new(PrimalitySeq::new())),

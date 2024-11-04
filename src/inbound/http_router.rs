@@ -1,16 +1,18 @@
-use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::HashMap, error::Error, time::{SystemTime, UNIX_EPOCH}};
 
-use axum::{http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
+use axum::{extract::State, http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
 use serde_json::json;
 use tokio::signal;
 
-use crate::{model::request_compute::RequestCompute, service::{self, health::Health}};
+use crate::{model::{entity_analytics::Model, request_analytics::RequestAnalytics, request_compute::RequestCompute}, outbound::db_driver::DbDriver, service::{self, analytics::Analytics, health::Health}};
 
 #[tokio::main]
-pub async fn start(config: &HashMap<String, HashMap<String, String>>) {
+pub async fn start(config: &HashMap<String, HashMap<String, String>>, db_client: DbDriver) {
     let app = Router::new()
         .route("/health", get(handler_health_get))
-        .route("/compute", post(handler_compute_post));
+        .route("/compute", post(handler_compute_post))
+        .route("/analytics", post(handler_analytics_post))
+        .with_state(db_client);
         
     let app = app.fallback(handler_404);
 
@@ -63,19 +65,71 @@ async fn handler_health_get() -> impl IntoResponse {
     return (StatusCode::OK, Json(json!(health_service.info())));
 }
 
-async fn handler_compute_post(Json(request): Json<RequestCompute>) -> impl IntoResponse {
+// #[debug_handler]
+async fn handler_compute_post(State(db_driver): State<DbDriver>, Json(request): Json<RequestCompute>) -> impl IntoResponse {
     log::info!("<compute_post> handler in controller invoked");
-    let mut algorithm_service = match service::factory_algorithm::get_algorithm(request.name) {
+
+    let mut algorithm_service = match service::factory_algorithm::get_algorithm(&request.name) {
         Ok(a) => a,
         Err(e) => return (StatusCode::NOT_IMPLEMENTED, Json(json!({"error": e.to_string()}))),
     };
 
+    let db_model = match __compute_insert(&db_driver, &request.name, &request.param) {
+        Ok(d) => d,
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    };
+
     let timer = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros();
-    let mut response = match algorithm_service.compute(request.param) {
+    let mut response = match algorithm_service.compute(&request.param) {
         Ok(r) => r,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
     };
     response.duration_micro_secs = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros() - timer;
 
+    match __compute_update(&db_driver, &db_model, &response.result) {
+        Ok(_) => (),
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    }
+
     return (StatusCode::OK, Json(json!(response)));
+}
+
+async fn handler_analytics_post(State(db_driver): State<DbDriver>, Json(request): Json<RequestAnalytics>) -> impl IntoResponse {  
+    let db_client = match db_driver.get_db().await {
+        Ok(c) => c,
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    };
+    
+    let analytics_service = Analytics::new();
+
+    let response = match futures::executor::block_on(analytics_service.analyse(&db_client, &request)) {
+        Ok(r) => r,
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    };
+
+    return (StatusCode::OK, Json(json!(response)));
+}
+
+fn __compute_insert(db_driver: &DbDriver, name: &String, param: &String) -> Result<Model, Box<dyn Error>> {
+    let _client = match futures::executor::block_on(db_driver.get_db()) {
+        Ok(c) => c,
+        Err(e) => return Err(format!("{}", e.to_string()).into()),
+    };
+    let analytics_service = Analytics::new();
+    let _db_object = match futures::executor::block_on(analytics_service.insert(&_client, name, param)) {
+        Ok(d) => return Ok(d),
+        Err(e) => return Err(format!("{}", e.to_string()).into()),
+    };
+}
+
+fn __compute_update(db_driver: &DbDriver, db_object: &Model, result: &String) -> Result<Model, Box<dyn Error>> {
+    let _client = match futures::executor::block_on(db_driver.get_db()) {
+        Ok(c) => c,
+        Err(e) => return Err(format!("{}", e.to_string()).into()),
+    };
+    let analytics_service = Analytics::new();
+    match futures::executor::block_on(analytics_service.update(&_client, db_object.clone(), result)) {
+        Ok(d) => return Ok(d),
+        Err(e) => return Err(format!("{}", e.to_string()).into()),
+    }
 }

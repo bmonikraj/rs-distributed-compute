@@ -7,7 +7,7 @@ pub struct EvenFibSum {
 }
 
 impl Algorithm for EvenFibSum {
-    fn compute(&mut self, param: String) -> Result<ResponseCompute, Box<dyn Error>> {
+    fn compute(&mut self, param: &String) -> Result<ResponseCompute, Box<dyn Error>> {
         self.n = param.parse::<i128>().unwrap();
         let mut r = ResponseCompute {
             name: "EvenFibSum".to_string(),

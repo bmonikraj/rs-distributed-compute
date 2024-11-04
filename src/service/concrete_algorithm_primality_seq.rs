@@ -12,7 +12,7 @@ pub struct PrimalitySeq {
 }
 
 impl Algorithm for PrimalitySeq {
-    fn compute(&mut self, param: String) -> Result<crate::model::response_compute::ResponseCompute, Box<dyn std::error::Error>> {
+    fn compute(&mut self, param: &String) -> Result<crate::model::response_compute::ResponseCompute, Box<dyn std::error::Error>> {
         self.n = param.parse::<i128>().unwrap();
         let mut r = ResponseCompute {
             name: "PrimalitySeq".to_string(),
