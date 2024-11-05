@@ -1,6 +1,7 @@
+use core::f32;
 use std::error::Error;
 
-use sea_orm::{sqlx::types::chrono::Utc, ActiveModelTrait, DatabaseConnection, Set};
+use sea_orm::{prelude::{Decimal}, sqlx::types::chrono::Utc, ActiveModelTrait, ConnectionTrait, DatabaseConnection, Set, Statement};
 
 use crate::model::{entity_analytics, request_analytics::RequestAnalytics, response_analytics::ResponseAnalytics};
 
@@ -12,6 +13,7 @@ impl Analytics {
     }
 
     pub async fn insert(&self, db_client: &DatabaseConnection, algorithm: &String, parameter: &String) -> Result<entity_analytics::Model, Box<dyn Error>> {
+        log::debug!("analytics::insert being invoked");
         let object = entity_analytics::ActiveModel {
             id: Set(uuid::Uuid::new_v4().to_owned()),
             algorithm: Set(algorithm.to_owned()),
@@ -27,6 +29,7 @@ impl Analytics {
     }
 
     pub async fn update(&self, db_client: &DatabaseConnection, object: entity_analytics::Model, result: &String) -> Result<entity_analytics::Model, Box<dyn Error>> {
+        log::debug!("analytics::update being invoked");
         let mut object: entity_analytics::ActiveModel = object.into();
         object.updated_at = Set(Utc::now().naive_utc().to_owned());
         object.result = Set(result.to_owned());
@@ -36,16 +39,44 @@ impl Analytics {
         };
     }
 
-    pub async fn analyse(&self, _db_client: &DatabaseConnection, request: &RequestAnalytics) -> Result<ResponseAnalytics, Box<dyn Error>> {        
-        let response = ResponseAnalytics {
+    pub async fn analyse(&self, db_client: &DatabaseConnection, request: &RequestAnalytics) -> Result<ResponseAnalytics, Box<dyn Error>> {        
+        let mut response = ResponseAnalytics {
             name: request.name.clone(),
             calls: 5,
-            average_execution_duration_microseconds: 10.0,
+            average_execution_duration_seconds: 10.0,
         };
-        if request.name == "a" {
-            return Ok(response);
-        } else {
-            return Err(format!("e_r_r_o_r").into());
-        }
+
+        let query_result_option = match db_client.query_one(
+            Statement::from_string(
+                sea_orm::DatabaseBackend::Postgres, 
+                format!("select extract('epoch' from AVG(analytics.updated_at - analytics.created_at)) as avg_, count(*) as call_ from public.analytics where analytics.algorithm like '{}';", request.name.clone()),
+            )
+        ).await {
+            Ok(r) => r,
+            Err(e) => return Err(format!("error: {}", e.to_string()).into()),
+        };
+
+        let query_result = match query_result_option {
+            Some(q) => q,
+            None => return Err(format!("error: no result retrieved from query").into()),
+        };
+
+        let call_: i64 = match query_result.try_get("", "call_") {
+            Ok(c) => c,
+            Err(e) => return Err(format!("error: {}", e.to_string()).into()),
+        };
+
+        let avg_exec_time_secs_: Decimal = match query_result.try_get("", "avg_") {
+            Ok(c) => c,
+            Err(e) => return Err(format!("error: {}", e.to_string()).into()),
+        };
+
+        response.calls = call_;
+        response.average_execution_duration_seconds = match avg_exec_time_secs_.to_string().parse::<f32>() {
+            Ok(f) => f,
+            Err(e) => return Err(format!("error: {}", e.to_string()).into()),
+        };
+
+        Ok(response)
     }
 }

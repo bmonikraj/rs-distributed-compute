@@ -38,9 +38,9 @@ fn main() {
     // starting the application
     log::info!("application [{}] starting...", config["meta"]["id"]);
 
-    let db_client = DbDriver::new(&config);
+    let db_driver = DbDriver::new(&config);
 
-    inbound::http_router::start(&config, db_client);
+    inbound::http_router::start(&config, db_driver);
 
 }
 

@@ -1,13 +1,20 @@
 use std::{collections::HashMap, error::Error, time::{SystemTime, UNIX_EPOCH}};
 
 use axum::{extract::State, http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
+use sea_orm::DatabaseConnection;
 use serde_json::json;
 use tokio::signal;
 
 use crate::{model::{entity_analytics::Model, request_analytics::RequestAnalytics, request_compute::RequestCompute}, outbound::db_driver::DbDriver, service::{self, analytics::Analytics, health::Health}};
 
 #[tokio::main]
-pub async fn start(config: &HashMap<String, HashMap<String, String>>, db_client: DbDriver) {
+pub async fn start(config: &HashMap<String, HashMap<String, String>>, db_driver: DbDriver) {
+    
+    let db_client = match futures::executor::block_on(db_driver.get_db()) {
+        Ok(c) => c,
+        Err(e) => panic!("db error: {}", e),
+    };
+    
     let app = Router::new()
         .route("/health", get(handler_health_get))
         .route("/compute", post(handler_compute_post))
@@ -66,7 +73,7 @@ async fn handler_health_get() -> impl IntoResponse {
 }
 
 // #[debug_handler]
-async fn handler_compute_post(State(db_driver): State<DbDriver>, Json(request): Json<RequestCompute>) -> impl IntoResponse {
+async fn handler_compute_post(State(db_driver): State<DatabaseConnection>, Json(request): Json<RequestCompute>) -> impl IntoResponse {
     log::info!("<compute_post> handler in controller invoked");
 
     let mut algorithm_service = match service::factory_algorithm::get_algorithm(&request.name) {
@@ -94,11 +101,11 @@ async fn handler_compute_post(State(db_driver): State<DbDriver>, Json(request): 
     return (StatusCode::OK, Json(json!(response)));
 }
 
-async fn handler_analytics_post(State(db_driver): State<DbDriver>, Json(request): Json<RequestAnalytics>) -> impl IntoResponse {  
-    let db_client = match db_driver.get_db().await {
-        Ok(c) => c,
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
-    };
+async fn handler_analytics_post(State(db_client): State<DatabaseConnection>, Json(request): Json<RequestAnalytics>) -> impl IntoResponse {  
+    // let db_client = match db_driver.get_db().await {
+    //     Ok(c) => c,
+    //     Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
+    // };
     
     let analytics_service = Analytics::new();
 
@@ -110,25 +117,19 @@ async fn handler_analytics_post(State(db_driver): State<DbDriver>, Json(request)
     return (StatusCode::OK, Json(json!(response)));
 }
 
-fn __compute_insert(db_driver: &DbDriver, name: &String, param: &String) -> Result<Model, Box<dyn Error>> {
-    let _client = match futures::executor::block_on(db_driver.get_db()) {
-        Ok(c) => c,
-        Err(e) => return Err(format!("{}", e.to_string()).into()),
-    };
+fn __compute_insert(db_client: &DatabaseConnection, name: &String, param: &String) -> Result<Model, Box<dyn Error>> {
+    log::debug!("__compute_insert being called");
     let analytics_service = Analytics::new();
-    let _db_object = match futures::executor::block_on(analytics_service.insert(&_client, name, param)) {
+    let _db_object = match futures::executor::block_on(analytics_service.insert(&db_client, name, param)) {
         Ok(d) => return Ok(d),
         Err(e) => return Err(format!("{}", e.to_string()).into()),
     };
 }
 
-fn __compute_update(db_driver: &DbDriver, db_object: &Model, result: &String) -> Result<Model, Box<dyn Error>> {
-    let _client = match futures::executor::block_on(db_driver.get_db()) {
-        Ok(c) => c,
-        Err(e) => return Err(format!("{}", e.to_string()).into()),
-    };
+fn __compute_update(db_client: &DatabaseConnection, db_object: &Model, result: &String) -> Result<Model, Box<dyn Error>> {
+    log::debug!("__compute_update being called");
     let analytics_service = Analytics::new();
-    match futures::executor::block_on(analytics_service.update(&_client, db_object.clone(), result)) {
+    match futures::executor::block_on(analytics_service.update(&db_client, db_object.clone(), result)) {
         Ok(d) => return Ok(d),
         Err(e) => return Err(format!("{}", e.to_string()).into()),
     }
