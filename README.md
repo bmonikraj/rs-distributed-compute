@@ -12,7 +12,7 @@ Distributed Computation for Finding sum of Prime numbers less than `N` with task
 
 ### DB Details
 
-DB Provider: `Aiven`
+DB Provider: `Supabase`
 
 Postgres URI => No SSL 
 
