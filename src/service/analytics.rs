@@ -1,5 +1,5 @@
 use core::f32;
-use std::error::Error;
+use std::{error::Error, ptr::addr_of};
 
 use sea_orm::{prelude::{Decimal}, sqlx::types::chrono::Utc, ActiveModelTrait, ConnectionTrait, DatabaseConnection, Set, Statement};
 
@@ -22,6 +22,7 @@ impl Analytics {
             created_at: Set(Utc::now().naive_utc().to_owned()),
             updated_at: Set(Utc::now().naive_utc().to_owned()),
         };
+        log::debug!("address of db_client {:#?}", addr_of!(db_client));
         match object.insert(db_client).await {
             Ok(o) => return Ok(o),
             Err(e) => return Err(format!("error: {}", e.to_string()).into()),
@@ -33,6 +34,7 @@ impl Analytics {
         let mut object: entity_analytics::ActiveModel = object.into();
         object.updated_at = Set(Utc::now().naive_utc().to_owned());
         object.result = Set(result.to_owned());
+        log::debug!("address of db_client {:#?}", addr_of!(db_client));
         match object.update(db_client).await {
             Ok(o) => return Ok(o),
             Err(e) => return Err(format!("error: {}", e.to_string()).into()),
@@ -40,12 +42,13 @@ impl Analytics {
     }
 
     pub async fn analyse(&self, db_client: &DatabaseConnection, request: &RequestAnalytics) -> Result<ResponseAnalytics, Box<dyn Error>> {        
+        log::debug!("analytics::analyse being invoked");
         let mut response = ResponseAnalytics {
             name: request.name.clone(),
             calls: 5,
             average_execution_duration_seconds: 10.0,
         };
-
+        log::debug!("address of db_client {:#?}", addr_of!(db_client));
         let query_result_option = match db_client.query_one(
             Statement::from_string(
                 sea_orm::DatabaseBackend::Postgres, 

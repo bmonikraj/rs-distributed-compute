@@ -1,6 +1,7 @@
 use std::{collections::HashMap, error::Error, time::{SystemTime, UNIX_EPOCH}};
 
 use axum::{extract::State, http::StatusCode, response::{IntoResponse, Json}, routing::{get, post}, Router};
+use axum_macros::debug_handler;
 use sea_orm::DatabaseConnection;
 use serde_json::json;
 use tokio::signal;
@@ -10,7 +11,7 @@ use crate::{model::{entity_analytics::Model, request_analytics::RequestAnalytics
 #[tokio::main]
 pub async fn start(config: &HashMap<String, HashMap<String, String>>, db_driver: DbDriver) {
     
-    let db_client = match futures::executor::block_on(db_driver.get_db()) {
+    let db_client = match db_driver.get_db().await {
         Ok(c) => c,
         Err(e) => panic!("db error: {}", e),
     };
@@ -72,7 +73,6 @@ async fn handler_health_get() -> impl IntoResponse {
     return (StatusCode::OK, Json(json!(health_service.info())));
 }
 
-// #[debug_handler]
 async fn handler_compute_post(State(db_driver): State<DatabaseConnection>, Json(request): Json<RequestCompute>) -> impl IntoResponse {
     log::info!("<compute_post> handler in controller invoked");
 
@@ -81,7 +81,7 @@ async fn handler_compute_post(State(db_driver): State<DatabaseConnection>, Json(
         Err(e) => return (StatusCode::NOT_IMPLEMENTED, Json(json!({"error": e.to_string()}))),
     };
 
-    let db_model = match __compute_insert(&db_driver, &request.name, &request.param) {
+    let db_model = match __compute_insert(&db_driver, &request.name, &request.param).await {
         Ok(d) => d,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
     };
@@ -93,7 +93,7 @@ async fn handler_compute_post(State(db_driver): State<DatabaseConnection>, Json(
     };
     response.duration_micro_secs = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_micros() - timer;
 
-    match __compute_update(&db_driver, &db_model, &response.result) {
+    match __compute_update(&db_driver, &db_model, &response.result).await {
         Ok(_) => (),
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
     }
@@ -101,15 +101,10 @@ async fn handler_compute_post(State(db_driver): State<DatabaseConnection>, Json(
     return (StatusCode::OK, Json(json!(response)));
 }
 
-async fn handler_analytics_post(State(db_client): State<DatabaseConnection>, Json(request): Json<RequestAnalytics>) -> impl IntoResponse {  
-    // let db_client = match db_driver.get_db().await {
-    //     Ok(c) => c,
-    //     Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
-    // };
-    
+async fn handler_analytics_post(State(db_client): State<DatabaseConnection>, Json(request): Json<RequestAnalytics>) -> impl IntoResponse { 
     let analytics_service = Analytics::new();
 
-    let response = match futures::executor::block_on(analytics_service.analyse(&db_client, &request)) {
+    let response = match analytics_service.analyse(&db_client, &request).await {
         Ok(r) => r,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()}))),
     };
@@ -117,19 +112,19 @@ async fn handler_analytics_post(State(db_client): State<DatabaseConnection>, Jso
     return (StatusCode::OK, Json(json!(response)));
 }
 
-fn __compute_insert(db_client: &DatabaseConnection, name: &String, param: &String) -> Result<Model, Box<dyn Error>> {
+async fn __compute_insert(db_client: &DatabaseConnection, name: &String, param: &String) -> Result<Model, Box<dyn Error>> {
     log::debug!("__compute_insert being called");
     let analytics_service = Analytics::new();
-    let _db_object = match futures::executor::block_on(analytics_service.insert(&db_client, name, param)) {
+    let _db_object: Model = match analytics_service.insert(&db_client, name, param).await {
         Ok(d) => return Ok(d),
         Err(e) => return Err(format!("{}", e.to_string()).into()),
     };
 }
 
-fn __compute_update(db_client: &DatabaseConnection, db_object: &Model, result: &String) -> Result<Model, Box<dyn Error>> {
+async fn __compute_update(db_client: &DatabaseConnection, db_object: &Model, result: &String) -> Result<Model, Box<dyn Error>> {
     log::debug!("__compute_update being called");
     let analytics_service = Analytics::new();
-    match futures::executor::block_on(analytics_service.update(&db_client, db_object.clone(), result)) {
+    match analytics_service.update(&db_client, db_object.clone(), result).await {
         Ok(d) => return Ok(d),
         Err(e) => return Err(format!("{}", e.to_string()).into()),
     }
