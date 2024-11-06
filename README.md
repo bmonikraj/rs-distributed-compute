@@ -18,6 +18,8 @@ Postgres URI => No SSL
 
 Example -> `"postgres://user:password@host:port/database"`
 
+`In supabase, the port must be 5432, even connection string in supabase UI shows 6543`
+
 ### Web framework reference
 
 [Reference](https://docs.rs/axum/0.7.6/axum/index.html)
