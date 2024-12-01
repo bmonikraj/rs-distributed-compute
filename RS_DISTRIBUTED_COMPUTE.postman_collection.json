@@ -1,0 +1,214 @@
+{
+	"info": {
+		"_postman_id": "e1426f9e-7a9e-4538-8c5a-cd2706da21a1",
+		"name": "RS_DISTRIBUTED_COMPUTE",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2070428"
+	},
+	"item": [
+		{
+			"name": "health",
+			"item": [
+				{
+					"name": "health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/health",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "fallback",
+			"item": [
+				{
+					"name": "invalid url",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/something",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"something"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "invalid url",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/something",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"something"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "compute",
+			"item": [
+				{
+					"name": "EvenFibSum",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"even_fib_sum\",\n    \"param\": \"5\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/compute",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"compute"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "PrimalitySeq",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"primality_seq\",\n    \"param\": \"6\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/compute",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"compute"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "analytics",
+			"item": [
+				{
+					"name": "analytics - even_fib_sum",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"even_fib_sum\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/analytics",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"analytics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "analytics - primality_seq",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"primality_seq\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/analytics",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"analytics"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "URL",
+			"value": "http://localhost:10000",
+			"type": "string"
+		}
+	]
+}
